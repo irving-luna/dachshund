@@ -1,17 +1,22 @@
 package udp
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
+	"positrace/models"
+	"positrace/usecase"
 )
 
 type UDPServer struct {
-	Port string
+	Port    string
+	Session *usecase.Session
 }
 
-func NewUDPServer(port string) *UDPServer {
+func NewUDPServer(port string, session *usecase.Session) *UDPServer {
 	return &UDPServer{
-		Port: port,
+		Port:    port,
+		Session: session,
 	}
 }
 
@@ -27,13 +32,21 @@ func (u *UDPServer) Listen() error {
 	}
 
 	fmt.Printf("UDP server listening in port: %s\n", u.Port)
- 
-	for {
-		buffer := make([]byte, 1024)
-		udpConn.ReadFromUDP(buffer)
 
-		// TODO: Handle UDP login request, generate session ID, and respond with TCP address:port
-		// TODO: Store session ID in Redis
+	buffer := make([]byte, 1024)
+	for {
+		n, _, err := udpConn.ReadFrom(buffer)
+		if err != nil {
+			return err
+		}
+
+		var lr models.LoginRequest
+		if err = json.Unmarshal(buffer[:n], &lr); err != nil {
+			continue
+		}
+
+		u.Session.Start(lr)
+
 	}
 
 }
