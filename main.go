@@ -19,5 +19,6 @@ func main() {
 	udpServer := udp.NewUDPServer("10000", sessionUsecase)
 	go udpServer.Listen()
 
+
 	select {}
 }
